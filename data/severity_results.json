@@ -1,0 +1,12 @@
+[
+  {
+    "id": "#002",
+    "severity": "high",
+    "explanation": "net_amount mismatch (6769950 vs 7220000); tax_rate mismatch (25 vs 20)"
+  },
+  {
+    "id": "#005",
+    "severity": "high",
+    "explanation": "holding_quantity mismatch (10000 vs 12000.0); gross_amount mismatch (31000 vs 37200); net_amount mismatch (20150 vs 24180)"
+  }
+]

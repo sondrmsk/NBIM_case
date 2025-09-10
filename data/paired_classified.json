@@ -1,0 +1,27 @@
+[
+  {
+    "id": "#001",
+    "severity": "medium",
+    "explanation": "Gross amount mismatch: NBIM=4212937.5, Custody=375000"
+  },
+  {
+    "id": "#002",
+    "severity": "high",
+    "explanation": "Tax or currency mismatch found."
+  },
+  {
+    "id": "#003",
+    "severity": "medium",
+    "explanation": "Gross amount mismatch: NBIM=772559.84, Custody=62000"
+  },
+  {
+    "id": "#004",
+    "severity": "medium",
+    "explanation": "Gross amount mismatch: NBIM=579419.88, Custody=46500"
+  },
+  {
+    "id": "#005",
+    "severity": "medium",
+    "explanation": "Gross amount mismatch: NBIM=386279.92, Custody=37200"
+  }
+]

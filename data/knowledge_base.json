@@ -1,0 +1,32 @@
+[
+  {
+    "type": "CUSTODIAN mismatch",
+    "pattern": ["custodian", "CUSTODIAN differs", "custodian names differ"],
+    "remediation": "Normalize custodian codes. Prefer NBIM’s long-form name when available."
+  },
+  {
+    "type": "TAX_RATE mismatch",
+    "pattern": ["tax_rate mismatch"],
+    "remediation": "Prefer Custody’s tax rate, since it reflects actual withholding tax applied."
+  },
+  {
+    "type": "TAX amount mismatch",
+    "pattern": ["tax differs"],
+    "remediation": "Recalculate NBIM’s tax amount using Custody’s tax rate."
+  },
+  {
+    "type": "PAYMENT_DATE mismatch",
+    "pattern": ["payment_date mismatch"],
+    "remediation": "Prefer later payment date to avoid premature cash expectations."
+  },
+  {
+    "type": "HOLDING_QUANTITY mismatch",
+    "pattern": ["holding_quantity differs"],
+    "remediation": "Confirm with Custody. If discrepancy small, align with NBIM; if large, escalate."
+  },
+  {
+    "type": "CURRENCY mismatch",
+    "pattern": ["settled_currency mismatch", "quotation_currency mismatch"],
+    "remediation": "Prefer Custody’s settlement currency. Escalate if NBIM reports a different one."
+  }
+]

@@ -1,170 +1,179 @@
-#!/usr/bin/env python3
-"""
-merge_and_transpose tool for smolagents (class-based)
-
-This tool cleans + pairs NBIM & Custody dividend CSVs side-by-side
-(NBIM1, CUSTODY1, NBIM2, CUSTODY2, ...), with ONLY the approved standardizations.
-"""
-
 import pandas as pd
 from pathlib import Path
 import re
+from itertools import zip_longest
 from smolagents import Tool
 
-# ---------- IO & Utilities ----------
-
-def read_csv_safely(path: Path) -> pd.DataFrame:
-    """Robust CSV reader: auto-detect delimiter, strip header whitespace/BOM, drop fully empty rows."""
+def _read_csv(path: Path) -> pd.DataFrame:
     df = pd.read_csv(path, sep=None, engine="python")
+    # normalize column names: strip BOM/whitespace; keep original case in values
     df.columns = [re.sub(r"^\ufeff", "", str(c)).strip() for c in df.columns]
-    mask_nonempty = df.apply(lambda r: any(str(x).strip() != "" for x in r), axis=1)
-    df = df[mask_nonempty].reset_index(drop=True)
-    return df
+    # drop fully empty rows
+    mask = df.apply(lambda r: any(str(x).strip() != "" for x in r), axis=1)
+    return df[mask].reset_index(drop=True)
 
-
-def first_nonempty(series_like, *colnames):
-    """Return the first non-empty value across provided columns for a given row-like object."""
-    for c in colnames:
-        if c in series_like and str(series_like[c]).strip() != "":
-            return series_like[c]
+def _first(row, *names):
+    for n in names:
+        if n in row and str(row[n]).strip() != "":
+            return row[n]
     return ""
 
+def _num(x):
+    try:
+        # allow strings like "1,234.56"
+        return float(str(x).replace(",", "").strip())
+    except:
+        return None
 
-def normalize_key_value(x: str) -> str:
-    """Normalize key parts (event_key, ISIN, bank) for pairing."""
-    return re.sub(r"\s+", "", str(x)).lower()
+def _is_multi_ccy(s: str) -> bool:
+    if not s: return False
+    txt = str(s)
+    # multi if it contains a space-separated list or " + "
+    return (" " in txt.strip() and len(txt.strip().split()) > 1) or ("+" in txt)
 
+def _merge_nbim_row(row: dict) -> dict:
+    # NBIM unified view
+    q_ccy = _first(row, "QUOTATION_CURRENCY")
+    s_ccy = _first(row, "SETTLEMENT_CURRENCY", "SETTLED_CURRENCY")
 
-def build_pair_key(row, is_nbim: bool) -> str:
-    """Pair key = (event_key, ISIN, bank_account?)"""
-    if is_nbim:
-        event_key = first_nonempty(row, "COAC_EVENT_KEY", "EVENT_KEY")
-    else:
-        event_key = first_nonempty(row, "EVENT_KEY", "COAC_EVENT_KEY")
+    # join with a SPACE if different
+    quotation_currency = q_ccy
+    if s_ccy and q_ccy and str(q_ccy).strip() != str(s_ccy).strip():
+        quotation_currency = f"{q_ccy} {s_ccy}"
 
-    isin = row.get("ISIN", "")
-    bank = first_nonempty(row, "bank_account", "BANK_ACCOUNT", "BANK_ACCOUNTS")
+    gross_q = _first(row, "GROSS_AMOUNT_QUOTATION", "GROSS_AMOUNT")
+    net_q   = _first(row, "NET_AMOUNT_QUOTATION", "NET_AMOUNT_QC", "NET_AMOUNT_QUOTATION_CC")
+    net_sc  = _first(row, "NET_AMOUNT_SETTLEMENT", "NET_AMOUNT_SC")
 
-    ek = normalize_key_value(event_key)
-    isv = normalize_key_value(isin)
-    b = normalize_key_value(bank)
+    tax_rate = _first(row, "TOTAL_TAX_RATE", "WTHTAX_RATE")
 
-    return f"{ek}|{isv}|{b}" if b else f"{ek}|{isv}"
+    tax = _first(row, "TAX")
+    g = _num(gross_q); n = _num(net_q)
+    if g is not None and n is not None:
+        tax = g - n
 
+    holding = _first(row, "NOMINAL_BASIS", "HOLDING_QUANTITY")
 
-# ---------- Approved Standardizations ----------
-
-APPROVED_STANDARDIZATIONS = [
-    ("settle_ccy",            ["SETTLEMENT_CURRENCY", "SETTLEMENT_CCY"]),
-    ("payment_date",          ["PAY_DATE", "EVENT_PAYMENT_DATE"]),
-    ("gross_amount_quote_ccy",["GROSS_AMOUNT_QUOTATION", "GROSS_AMOUNT"]),
-    ("net_amount_quote_ccy",  ["NET_AMOUNT_QUOTATION", "NET_AMOUNT_QC"]),
-    ("net_amount_settle_ccy", ["NET_AMOUNT_SETTLEMENT", "NET_AMOUNT_SC"]),
-    ("bank_account",          ["BANK_ACCOUNT", "BANK_ACCOUNTS"]),
-    ("custodian",             ["CUSTODIAN", "CUSTODIAN_NAME"]),
-    ("security_name",         ["SECURITY_NAME", "NAME", "INSTRUMENT_DESCRIPTION"]),
-]
-
-
-def apply_standardizations(df: pd.DataFrame) -> pd.DataFrame:
-    """Create ONLY the approved merged columns. Drop source cols afterwards."""
-    df = df.copy()
-    for new_name, sources in APPROVED_STANDARDIZATIONS:
-        df[new_name] = df.apply(lambda r: first_nonempty(r, *sources), axis=1)
-        for s in sources:
-            if s in df.columns:
-                del df[s]
-    return df
-
-
-# ---------- Pairing & Transpose ----------
-
-def pair_instances(nbim_df: pd.DataFrame, cust_df: pd.DataFrame) -> pd.DataFrame:
-    """Pair instances by (event_key, ISIN, bank_account?) and return a transposed matrix."""
-    nbim_df = nbim_df.copy()
-    cust_df = cust_df.copy()
-
-    nbim_df["_pair_key"] = nbim_df.apply(lambda r: build_pair_key(r, True), axis=1)
-    cust_df["_pair_key"] = cust_df.apply(lambda r: build_pair_key(r, False), axis=1)
-
-    sort_cols_nbim = [c for c in ["COAC_EVENT_KEY", "EVENT_KEY", "ISIN", "bank_account"] if c in nbim_df.columns]
-    sort_cols_cust = [c for c in ["EVENT_KEY", "COAC_EVENT_KEY", "ISIN", "bank_account"] if c in cust_df.columns]
-    nbim_df = nbim_df.sort_values(by=["_pair_key"] + sort_cols_nbim, kind="mergesort").reset_index(drop=True)
-    cust_df = cust_df.sort_values(by=["_pair_key"] + sort_cols_cust, kind="mergesort").reset_index(drop=True)
-
-    nbim_groups = {k: g.drop(columns=["_pair_key"]) for k, g in nbim_df.groupby("_pair_key", dropna=False)}
-    cust_groups = {k: g.drop(columns=["_pair_key"]) for k, g in cust_df.groupby("_pair_key", dropna=False)}
-    all_keys = sorted(set(nbim_groups) | set(cust_groups))
-
-    all_fields = []
-    def add_fields(cols):
-        for c in cols:
-            if c not in all_fields:
-                all_fields.append(c)
-
-    for g in nbim_groups.values(): add_fields(list(g.columns))
-    for g in cust_groups.values(): add_fields(list(g.columns))
-
-    wide = pd.DataFrame(index=all_fields)
-    pair_counter = 0
-
-    for key in all_keys:
-        n_df = nbim_groups.get(key, pd.DataFrame(columns=all_fields))
-        c_df = cust_groups.get(key, pd.DataFrame(columns=all_fields))
-
-        max_len = max(len(n_df), len(c_df))
-        if max_len == 0:
-            continue
-
-        for i in range(max_len):
-            pair_counter += 1
-            nbim_col = f"NBIM#{pair_counter:03d}"
-            cust_col = f"CUSTODY#{pair_counter:03d}"
-
-            n_series = (n_df.iloc[i] if i < len(n_df) else pd.Series(dtype=object)).reindex(all_fields)
-            c_series = (c_df.iloc[i] if i < len(c_df) else pd.Series(dtype=object)).reindex(all_fields)
-
-            wide[nbim_col] = n_series
-            wide[cust_col] = c_series
-
-    wide.index.name = "Field"
-    return wide.fillna("")
+    return {
+        "COAC_EVENT_KEY": _first(row, "COAC_EVENT_KEY", "EVENT_KEY"),
+        "ISIN": _first(row, "ISIN"),
+        "SEDOL": _first(row, "SEDOL"),
+        "TICKER": _first(row, "TICKER"),
+        "ORGANISATION_NAME": _first(row, "ORGANISATION_NAME"),
+        "DIVIDENDS_PER_SHARE": _first(row, "DIVIDENDS_PER_SHARE", "DIV_RATE"),
+        "EX_DATE": _first(row, "EXDATE", "EX_DATE"),
+        "PAYMENT_DATE": _first(row, "PAYMENT_DATE"),
+        "QUOTATION_CURRENCY": quotation_currency,
+        "SETTLED_CURRENCY": s_ccy,
+        "IS_CROSS_CURRENCY_REVERSAL": _is_multi_ccy(quotation_currency),
+        "HOLDING_QUANTITY": holding,
+        "GROSS_AMOUNT_QUOTATION": gross_q,
+        "NET_AMOUNT_QUOTATION": net_q,
+        "NET_AMOUNT_SETTLEMENT": net_sc,
+        "TAX_RATE": tax_rate,
+        "TAX": tax,
+        "BANK_ACCOUNT": _first(row, "BANK_ACCOUNT", "BANK_ACCOUNTS"),
+        "CUSTODIAN": _first(row, "CUSTODIAN", "CUSTODIAN_NAME"),
+    }
 
 
-# ---------- Smolagents Tool (Class-based) ----------
+def _merge_cust_row(row: dict) -> dict:
+    # CUSTODY unified view
+    quotation_currency = _first(row, "CURRENCIES")
+    s_ccy = _first(row, "SETTLED_CURRENCY", "SETTLEMENT_CURRENCY")
+
+    gross_q = _first(row, "GROSS_AMOUNT_QUOTATION", "GROSS_AMOUNT")
+    net_q   = _first(row, "NET_AMOUNT_QUOTATION", "NET_AMOUNT_QC", "NET_AMOUNT_QUOTATION_CC")
+    net_sc  = _first(row, "NET_AMOUNT_SETTLEMENT", "NET_AMOUNT_SC")
+
+    # TAX: compute if possible, else use provided
+    tax = _first(row, "TAX")
+    g = _num(gross_q); n = _num(net_q)
+    if g is not None and n is not None:
+        tax = g - n if tax in ("", None) else (_num(tax) if _num(tax) is not None else g - n)
+
+    # HOLDING = holding_quantity + loan_quantity (missing -> 0)
+    h = _num(_first(row, "HOLDING_QUANTITY", "NOMINAL_BASIS")) or 0.0
+    l = _num(_first(row, "LOAN_QUANTITY")) or 0.0
+    holding = h + l
+
+    return {
+        "COAC_EVENT_KEY": _first(row, "COAC_EVENT_KEY", "EVENT_KEY"),
+        "ISIN": _first(row, "ISIN"),
+        "SEDOL": _first(row, "SEDOL"),
+        "TICKER": _first(row, "TICKER"),  # will backfill from NBIM if empty
+        "ORGANISATION_NAME": _first(row, "ORGANISATION_NAME"),  # backfill from NBIM if empty
+        "DIVIDENDS_PER_SHARE": _first(row, "DIV_RATE", "DIVIDENDS_PER_SHARE"),
+        "EX_DATE": _first(row, "EX_DATE", "EXDATE"),
+        "PAYMENT_DATE": _first(row, "EVENT_PAYMENT_DATE", "PAYMENT_DATE"),
+        "QUOTATION_CURRENCY": quotation_currency,  # typically already like "KRW USD"
+        "SETTLED_CURRENCY": s_ccy,
+        "IS_CROSS_CURRENCY_REVERSAL": _is_multi_ccy(quotation_currency),
+        "HOLDING_QUANTITY": holding,
+        "GROSS_AMOUNT_QUOTATION": gross_q,
+        "NET_AMOUNT_QUOTATION": net_q,
+        "NET_AMOUNT_SETTLEMENT": net_sc,
+        "TAX_RATE": _first(row, "TAX_RATE"),
+        "TAX": tax,
+        "BANK_ACCOUNT": _first(row, "BANK_ACCOUNT", "BANK_ACCOUNTS"),
+        "CUSTODIAN": _first(row, "CUSTODIAN", "CUSTODIAN_NAME"),
+    }
+
 
 class MergeAndTransposeTool(Tool):
     name = "merge_and_transpose"
     description = (
-        "Clean + pair NBIM & Custody dividend CSVs side-by-side "
-        "(NBIM1, CUSTODY1, ...), with ONLY the approved standardizations. "
-        "Returns the path to the merged transposed CSV."
+        "Pair NBIM & Custody by row order, hard-merge overlapping fields, "
+        "compute key metrics (tax, currencies, holdings), "
+        "and write CSV + JSON with explicit ids No.NNN."
     )
-    inputs = {
-        "nbim_csv_path": {
-            "type": "string",
-            "description": "Path to the NBIM CSV file."
-        },
-        "custody_csv_path": {
-            "type": "string",
-            "description": "Path to the Custody CSV file."
-        },
-        "out_csv_path": {
-            "type": "string",
-            "description": "Where to save the merged/transposed CSV.",
-            "nullable": True   # ✅ mark as nullable since it has a default
-        },
-    }
-    output_type = "string"
+    inputs = {}
+    output_type = "object"
 
-    def forward(self, nbim_csv_path: str, custody_csv_path: str, out_csv_path: str = "paired_transposed_clean.csv") -> str:
-        nbim_raw = read_csv_safely(Path(nbim_csv_path))
-        cust_raw = read_csv_safely(Path(custody_csv_path))
+    def forward(self):
+        nbim_path = Path("data/NBIM_Dividend_Bookings 1.csv")
+        cust_path = Path("data/CUSTODY_Dividend_Bookings 1.csv")
+        out_csv   = Path("data/paired_transposed_clean.csv")
+        out_json  = Path("data/paired.json")
 
-        nbim_std = apply_standardizations(nbim_raw)
-        cust_std = apply_standardizations(cust_raw)
+        nbim_df = _read_csv(nbim_path)
+        cust_df = _read_csv(cust_path)
 
-        result = pair_instances(nbim_std, cust_std)
-        result.to_csv(out_csv_path, index=True)
-        print(f"[merge_and_transpose] Saved '{out_csv_path}' with shape {result.shape}.")
-        return result
+        pairs = []
+        # pair strictly by position
+        for i, (nbim_row, cust_row) in enumerate(zip_longest(nbim_df.to_dict("records"),
+                                                            cust_df.to_dict("records"),
+                                                            fillvalue={} ), start=1):
+            nbim_u = _merge_nbim_row(nbim_row)
+            cust_u = _merge_cust_row(cust_row)
+
+            # Backfill informative things from NBIM into Custody if blank
+            if not str(cust_u.get("TICKER", "")).strip():
+                cust_u["TICKER"] = nbim_u.get("TICKER", "")
+            if not str(cust_u.get("ORGANISATION_NAME", "")).strip():
+                cust_u["ORGANISATION_NAME"] = nbim_u.get("ORGANISATION_NAME", "")
+
+            pairs.append({
+                "id": f"No.{i:03d}",
+                "NBIM": nbim_u,
+                "CUSTODY": cust_u
+            })
+
+        # ---------- write CSV in your preferred “transposed” style ----------
+        # rows = fields; columns = NBIM#001, CUSTODY#001, …
+        fields = list(pairs[0]["NBIM"].keys()) if pairs else []
+        wide = pd.DataFrame(index=fields)
+        for i, p in enumerate(pairs, start=1):
+            wide[f"NBIM#{i:03d}"] = pd.Series(p["NBIM"])
+            wide[f"CUSTODY#{i:03d}"] = pd.Series(p["CUSTODY"])
+        wide.index.name = "FIELD"
+        wide.to_csv(out_csv)
+
+        # ---------- write JSON ----------
+        import json
+        json_out = {"pairs": pairs}
+        with open(out_json, "w") as f:
+            json.dump(json_out, f, indent=2)
+
+        print(f"[merge_and_transpose] Saved '{out_csv}' and '{out_json}'")
+        return json_out
