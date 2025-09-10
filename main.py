@@ -8,8 +8,9 @@ def main():
     # Step 1: Run Diagnoser
     agent = Diagnoser()
     result = agent.run(
-        "Call merge_and_transpose on 'data/NBIM_Dividend_Bookings 1.csv' "
-        "and 'data/CUSTODY_Dividend_Bookings 1.csv' and tell me what it is about."
+        "Analyze the dividend data from NBIM and Custody, identify discrepancies, classify their severity, and " \
+        "provide explanations. Follow the instructions you have received with great accuracy. " \
+        "Output the results as a JSON array and remember that all pccurences need to be analyzed and outputted."
     )
     print("Agent result:", result)
 

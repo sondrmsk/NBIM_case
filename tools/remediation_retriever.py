@@ -39,7 +39,7 @@ class RemediationRetrieverTool(Tool):
         docs_processed = splitter.split_documents(source_docs)
 
         # Initialize retriever
-        self.retriever = BM25Retriever.from_documents(docs_processed, k=1)
+        self.retriever = BM25Retriever.from_documents(docs_processed, k=3)
 
     def forward(self, explanation: str) -> str:
         """Retrieve the most relevant remediation strategy for the discrepancy explanation"""

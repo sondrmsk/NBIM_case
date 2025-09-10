@@ -14,7 +14,7 @@ from tools.csv_to_json import ShowOriginalCSVTool
 class Diagnoser(CodeAgent):
     def __init__(self):
         model = LiteLLMModel(
-            model_id="gpt-4o-mini",
+            model_id="gpt-4o",
             api_base="https://api.openai.com/v1",
             api_key=None,  # picked up from OPENAI_API_KEY in .env
         )
@@ -31,7 +31,9 @@ class Diagnoser(CodeAgent):
     "   - The JSON has the shape: {'pairs':[{'id':'No.001','NBIM':{...},'CUSTODY':{...}}, ...]}. "
     "   - Count the number of pairs. You MUST investigate EVERY one. "
     "2) Read the JSON carefully. For each pair, compare the NBIM vs CUSTODY values field-by-field. "
-    "   Focus on the main economic fields (e.g. payment_date, holding_quantity, gross/net/tax amounts, tax_rate, currencies, custodian). "
+    "   Focus on the main economic fields (e.g. payment_date, holding_quantity, gross/net/tax amounts, tax_rate, currencies, custodian)." \
+    "   Remember that you are an expert analyst, so you should also be able to understand if, and how, "
+    "   different mismatches within an occurence are connected. "
     "3) If you want to investigate the data further, you can use the ShowOriginalCSVTool "
     "   to read the original NBIM and CUSTODY CSVs as JSON. This step is optional"
     "4) For each pair (convert 'No.001' to '#001', etc.), decide the severity of discrepancies: "
@@ -43,12 +45,15 @@ class Diagnoser(CodeAgent):
     "   - If there are multiple mismatches, combine them into one explanation. "
     ""
     "Important rules: "
-    "- Output MUST include exactly one object per id, no skips, no duplicates. "
+    "- Output MUST include exactly one object per id, no skips, no duplicates. " \
+    "- This means that you should NEVER, under any circumstances, analyze only a subset of the data. "
+    "- If there are 5 occurences, you output 5 instances of severity rating and explanation. "
+    "- If there are 10 occurences, you output 10 instances of severity rating and explanation." \
     "- Treat custodian codes like 'CUST/UBSCH' as equal to 'UBS_SWITZERLAND'. "
     "- Think independently when you see custodian names to decide if they ACTUALLY differ."
     "- Consider numeric amounts equal if abs(diff) <= 1.0. "
     "- Parse dates as DD.MM.YYYY; compare only if both are present. "
-    "- Ignore fields if either side is blank/None. "
+    "- You MUST follow the classification strictly, use your expert judgement, and avoid over- or under-reporting. "
     ""
     "Output format: "
     "Return a JSON array (as a string) with exactly one object per id. "

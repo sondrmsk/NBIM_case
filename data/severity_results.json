@@ -1,12 +1,27 @@
 [
   {
+    "id": "#001",
+    "severity": "high",
+    "explanation": "CUSTODIAN differs (JPMORGAN_CHASE vs CUST/JPMORGANUS)"
+  },
+  {
     "id": "#002",
     "severity": "high",
-    "explanation": "net_amount mismatch (6769950 vs 7220000); tax_rate mismatch (25 vs 20)"
+    "explanation": "NET_AMOUNT_QUOTATION differs (6769950 vs 7220000); NET_AMOUNT_SETTLEMENT differs (5181.5 vs 5524.27); TAX_RATE differs (25 vs 20); TAX differs (2255050.0 vs 1805000.0); CUSTODIAN differs (HSBC_KOREA vs CUST/HSBCKR)"
+  },
+  {
+    "id": "#003",
+    "severity": "high",
+    "explanation": "CUSTODIAN differs (UBS_SWITZERLAND vs CUST/UBSCH)"
+  },
+  {
+    "id": "#004",
+    "severity": "high",
+    "explanation": "CUSTODIAN differs (UBS_SWITZERLAND vs CUST/UBSCH)"
   },
   {
     "id": "#005",
     "severity": "high",
-    "explanation": "holding_quantity mismatch (10000 vs 12000.0); gross_amount mismatch (31000 vs 37200); net_amount mismatch (20150 vs 24180)"
+    "explanation": "HOLDING_QUANTITY differs (10000 vs 12000.0); GROSS_AMOUNT_QUOTATION differs (31000 vs 37200); NET_AMOUNT_QUOTATION differs (20150 vs 24180); NET_AMOUNT_SETTLEMENT differs (20150.0 vs 24180.0); TAX differs (10850.0 vs 13020.0); CUSTODIAN differs (UBS_SWITZERLAND vs CUST/UBSCH)"
   }
 ]
