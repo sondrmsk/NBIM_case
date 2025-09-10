@@ -8,15 +8,14 @@ class SeverityClassifierTool(Tool):
     description = (
         "Persist agent-generated severity insights as JSON. "
         "Input must be a JSON string representing a list of objects: "
-        '[{"id":"#001","severity":"none|low|medium|high","explanation":"..."}]. '
-        "Example input: "
-        '[{"id":"#001","severity":"none","explanation":"No discrepancies."},'
-        ' {"id":"#002","severity":"medium","explanation":"payment_date mismatch; net +6.6%."}]'
+        '[{"id":"#001","severity":"none|low|medium|high","explanation":"...","comment":"..."}].  ' \
+        'The comment should be your own words, unique and comment about what has happened. ' \
+        "Each item must also include 'organisation_name', 'coac_event_key', and 'bank_account'."
     )
     inputs = {
         "insights_json": {
             "type": "string",
-            "description": "A JSON string: list of {id, severity, explanation}."
+            "description": "A JSON string: list of {id, severity, explanation, organisation_name, coac_event_key, bank_account, comment}."
         }
     }
     output_type = "string"
@@ -33,11 +32,13 @@ class SeverityClassifierTool(Tool):
             raise ValueError("Insights must be a JSON list.")
 
         allowed_sev = {"none", "low", "medium", "high"}
+        required_keys = {"id", "severity", "explanation", "organisation_name", "coac_event_key", "bank_account", "comment"}
         seen_ids = set()
+
         for i, row in enumerate(data):
             if not isinstance(row, dict):
                 raise ValueError(f"Item {i} must be an object.")
-            missing = {"id","severity","explanation"} - set(row.keys())
+            missing = required_keys - set(row.keys())
             if missing:
                 raise ValueError(f"Item {i} missing keys: {missing}")
             if not isinstance(row["id"], str) or not row["id"].startswith("#"):
@@ -46,6 +47,8 @@ class SeverityClassifierTool(Tool):
                 raise ValueError(f"Item {i} invalid severity: {row['severity']!r}")
             if not isinstance(row["explanation"], str):
                 raise ValueError(f"Item {i} explanation must be string.")
+            if not isinstance(row["comment"], str):
+                raise ValueError(f"Item {i} comment must be string.")
 
             if row["id"] in seen_ids:
                 raise ValueError(f"Duplicate id found: {row['id']}")

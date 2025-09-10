@@ -7,7 +7,7 @@ load_dotenv()
 class RemediationAgent(CodeAgent):
     def __init__(self, knowledge_base_path: str):
         model = LiteLLMModel(
-            model_id="gpt-4o",
+            model_id="gpt-4o-mini",
             api_base="https://api.openai.com/v1",
             api_key=None,  # from OPENAI_API_KEY in .env
         )
@@ -36,7 +36,9 @@ class RemediationAgent(CodeAgent):
                 "Output format: Return a plain string with the remediation suggestion."
             ),
             add_base_tools=False,
-            additional_authorized_imports=["json", "pandas", "pathlib"]
+            additional_authorized_imports=["json", "pandas", "pathlib"],
+            verbosity_level = 2,
+            max_steps=6
         )
 
     def remediate(self, entry: dict) -> str:

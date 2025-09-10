@@ -1,27 +1,47 @@
 [
   {
     "id": "#001",
-    "severity": "high",
-    "explanation": "CUSTODIAN differs (JPMORGAN_CHASE vs CUST/JPMORGANUS)"
+    "severity": "none",
+    "explanation": "No discrepancies on approved fields.",
+    "organisation_name": "Apple Inc",
+    "coac_event_key": 950123456,
+    "bank_account": 501234567,
+    "comment": "Discrepancies found in the analysis."
   },
   {
     "id": "#002",
     "severity": "high",
-    "explanation": "NET_AMOUNT_QUOTATION differs (6769950 vs 7220000); NET_AMOUNT_SETTLEMENT differs (5181.5 vs 5524.27); TAX_RATE differs (25 vs 20); TAX differs (2255050.0 vs 1805000.0); CUSTODIAN differs (HSBC_KOREA vs CUST/HSBCKR)"
+    "explanation": "net_amount differs by 450050 | tax_amount differs by 450050.0 | tax_rate mismatch (25% vs 20%)",
+    "organisation_name": "Samsung Electronics Co Ltd",
+    "coac_event_key": 960789012,
+    "bank_account": 712345678,
+    "comment": "Discrepancies found in the analysis."
   },
   {
     "id": "#003",
-    "severity": "high",
-    "explanation": "CUSTODIAN differs (UBS_SWITZERLAND vs CUST/UBSCH)"
+    "severity": "none",
+    "explanation": "No discrepancies on approved fields.",
+    "organisation_name": "Nestle SA",
+    "coac_event_key": 970456789,
+    "bank_account": 823456789,
+    "comment": "Discrepancies found in the analysis."
   },
   {
     "id": "#004",
-    "severity": "high",
-    "explanation": "CUSTODIAN differs (UBS_SWITZERLAND vs CUST/UBSCH)"
+    "severity": "none",
+    "explanation": "No discrepancies on approved fields.",
+    "organisation_name": "Nestle SA",
+    "coac_event_key": 970456789,
+    "bank_account": 823456790,
+    "comment": "Discrepancies found in the analysis."
   },
   {
     "id": "#005",
     "severity": "high",
-    "explanation": "HOLDING_QUANTITY differs (10000 vs 12000.0); GROSS_AMOUNT_QUOTATION differs (31000 vs 37200); NET_AMOUNT_QUOTATION differs (20150 vs 24180); NET_AMOUNT_SETTLEMENT differs (20150.0 vs 24180.0); TAX differs (10850.0 vs 13020.0); CUSTODIAN differs (UBS_SWITZERLAND vs CUST/UBSCH)"
+    "explanation": "holding_quantity differs by 2000.0 | gross_amount differs by 6200 | net_amount differs by 4030 | tax_amount differs by 2170.0",
+    "organisation_name": "Nestle SA",
+    "coac_event_key": 970456789,
+    "bank_account": 823456791,
+    "comment": "Discrepancies found in the analysis."
   }
 ]

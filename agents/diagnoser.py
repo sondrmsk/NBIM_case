@@ -14,7 +14,7 @@ from tools.csv_to_json import ShowOriginalCSVTool
 class Diagnoser(CodeAgent):
     def __init__(self):
         model = LiteLLMModel(
-            model_id="gpt-4o",
+            model_id="gpt-4o-mini",
             api_base="https://api.openai.com/v1",
             api_key=None,  # picked up from OPENAI_API_KEY in .env
         )
@@ -24,7 +24,9 @@ class Diagnoser(CodeAgent):
             instructions = (
     "You are an expert data analyst. You are tasked with analyzing dividend data from both "
     "NBIM and its Custodian Bank, where mismatches sometimes occur. "
-    "An example is if the tax rate in NBIM's data is 0% while Custody's data says 15%. "
+    "An example is if the tax rate in NBIM's data is 0% while Custody's data says 15%. " \
+    "Remember that the most important work you do here is classifying the severity of discrepancies correctly; " \
+    "think like a financial expert: the more likely you feel an error could lead to losing a lot of money, the more severe it is"
     ""
     "Workflow: "
     "1) Call the MergeAndTransposeTool to obtain the merged JSON. "
@@ -41,8 +43,12 @@ class Diagnoser(CodeAgent):
     "   - 'low' for cosmetic differences (e.g. custodian name differs, ticker spelling), "
     "   - 'medium' for payment_date mismatches or a single amount differing beyond tolerance, "
     "   - 'high' for settlement currency mismatches or multiple material discrepancies in amounts/tax/holdings. "
-    "5) For EACH id, write a short, clear explanation of what differs, citing NBIM vs CUSTODY values. "
-    "   - If there are multiple mismatches, combine them into one explanation. "
+    "5) For EACH id, produce a structured JSON object with: "
+    "   - 'id': the identifier like '#001', "
+    "   - 'severity': one of none|low|medium|high, "
+    "   - 'explanation': a short, clear explanation of what differs (with NBIM vs Custody values), "
+    "   - 'comment': a unique free-text summary in your own words of what is going on (your analytical remark), "
+    "   - 'organisation_name', 'coac_event_key', and 'bank_account' (take these values directly from the NBIM side). "
     ""
     "Important rules: "
     "- Output MUST include exactly one object per id, no skips, no duplicates. " \
@@ -71,5 +77,7 @@ class Diagnoser(CodeAgent):
     "so it can be stored on disk."
 ),
             add_base_tools=False,
-            additional_authorized_imports=["json", "pandas", "pathlib"]
+            additional_authorized_imports=["json", "pandas", "pathlib"],
+            verbosity_level = 2,
+            max_steps=6
         )

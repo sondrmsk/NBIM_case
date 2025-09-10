@@ -1,0 +1,74 @@
+[
+  {
+    "type": "CUSTODIAN mismatch",
+    "pattern": [
+      "custodian",
+      "CUSTODIAN differs",
+      "custodian names differ"
+    ],
+    "remediation": "Normalize custodian codes. Prefer NBIM\u2019s long-form name when available."
+  },
+  {
+    "type": "custodian and amount correction",
+    "pattern": [
+      "custodian and amount mismatch"
+    ],
+    "remediation": "Change custodian name to 'HSBC_KOREA' and adjust the amount to 5524.27 to match the expected values."
+  },
+  {
+    "type": "Normalization",
+    "pattern": [
+      "'CUST/UBSCH' to 'UBS_SWITZERLAND'"
+    ],
+    "remediation": "Normalize custodian code and adjust amount to 24180.0"
+  },
+  {
+    "type": "Normalization",
+    "pattern": [
+      "Changing 'CUST/UBSCH' to 'UBS_SWITZERLAND'"
+    ],
+    "remediation": "Normalize the custodian code from 'CUST/UBSCH' to 'UBS_SWITZERLAND' and adjust the amount to 24180.0."
+  },
+  {
+    "type": "Adjustment",
+    "pattern": [
+      "Adjustments to TAX amount, TAX_RATE and NET_AMOUNT_SETTLEMENT"
+    ],
+    "remediation": "1. Set the TAX amount to 1805000.0\n2. Change the TAX_RATE to 20\n3. Modify the NET_AMOUNT_SETTLEMENT to 5524.27"
+  },
+  {
+    "type": "Values Update",
+    "pattern": [
+      "Adjust the holding quantity to 12000, update the tax to 13020, and revise the net amount settlement to 24180."
+    ],
+    "remediation": "Implement the adjustments as per the custodian's values."
+  },
+  {
+    "type": "Adjustments required for tax rate and amounts",
+    "pattern": [
+      "Adjust tax rate, change quote amount and verify currency"
+    ],
+    "remediation": "Adjust the tax rate in NBIM to match Custody's 20%. Change the NET_AMOUNT_QUOTATION in NBIM to 7220000. Verify and prefer the Custody's settlement currency. Escalate if there are discrepancies in reporting."
+  },
+  {
+    "type": "data adjustment",
+    "pattern": [
+      "holding quantity and amounts differ from Custody's records"
+    ],
+    "remediation": "Adjust holding quantity to 12000, update GROSS_AMOUNT_QUOTATION to 37200, NET_AMOUNT_QUOTATION to 24180, and TAX to 13020."
+  },
+  {
+    "type": "TAX_RATE mismatch",
+    "pattern": [
+      "tax differs"
+    ],
+    "remediation": "Adjust the net amount and tax amount to align with the correct figures, and update the tax rate to 20% as per the Custody's report."
+  },
+  {
+    "type": "adjustments",
+    "pattern": [
+      "Multiple adjustments made"
+    ],
+    "remediation": "{\"holding_quantity_adjustment\": 2000, \"gross_amount_correction\": 6200, \"net_amount_update\": 4030, \"tax_amount_revision\": 2170}"
+  }
+]
