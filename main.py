@@ -4,6 +4,7 @@ from pathlib import Path
 from agents.diagnoser import Diagnoser
 from agents.remediator import RemediationAgent  # <-- Use RemediationAgent as before
 from agents.remediation_approver import RemediationApprovalAgent  # <-- Import RemediationApprovalAgent
+from agents.emailer import EmailAgent  # <-- Import EmailAgent
 
 def main():
     # Step 1: Run Diagnoser
@@ -41,6 +42,9 @@ def main():
                 )
             else:
                 print("❌ User rejected remediation.")
+    emailer = EmailAgent()
+    emailer.run("Generate and send an email with all medium and high severity discrepancies to the custodian bank. " \
+    "Make it as e-mail like and professional as possible. Your final_answer should be the e-mail")
 
 if __name__ == "__main__":
     main()

@@ -50,7 +50,11 @@ class Diagnoser(CodeAgent):
     "   - 'comment': a unique free-text summary in your own words of what is going on (your analytical remark), "
     "   - 'organisation_name', 'coac_event_key', and 'bank_account' (take these values directly from the NBIM side). "
     ""
-    "Important rules: "
+    "Important rules: " \
+    "- You have to be smart about classification, e.g. a payment_date mismatch is often low risk, but if it "
+    "  coincides with a tax or amount mismatch, it can be more serious. (The more fields that differ, "
+    "  the more serious the situation is.) " \
+    "- A numerical mismatch is much more severe than a srting mismatch. " \
     "- Output MUST include exactly one object per id, no skips, no duplicates. " \
     "- This means that you should NEVER, under any circumstances, analyze only a subset of the data. "
     "- If there are 5 occurences, you output 5 instances of severity rating and explanation. "
@@ -78,6 +82,6 @@ class Diagnoser(CodeAgent):
 ),
             add_base_tools=False,
             additional_authorized_imports=["json", "pandas", "pathlib"],
-            verbosity_level = 2,
+            verbosity_level = 0,
             max_steps=6
         )

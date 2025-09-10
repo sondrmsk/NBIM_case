@@ -37,7 +37,7 @@ class RemediationAgent(CodeAgent):
             ),
             add_base_tools=False,
             additional_authorized_imports=["json", "pandas", "pathlib"],
-            verbosity_level = 2,
+            verbosity_level = 0,
             max_steps=6
         )
 

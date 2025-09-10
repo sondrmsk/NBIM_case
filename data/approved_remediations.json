@@ -70,5 +70,103 @@
       "Multiple adjustments made"
     ],
     "remediation": "{\"holding_quantity_adjustment\": 2000, \"gross_amount_correction\": 6200, \"net_amount_update\": 4030, \"tax_amount_revision\": 2170}"
+  },
+  {
+    "type": "NET_AMOUNT adjustment",
+    "pattern": [
+      "tax differs"
+    ],
+    "remediation": "Adjust net amount quotation to 7220000, change tax rate to 20, and adjust tax amount to 1805000."
+  },
+  {
+    "type": "HOLDING QUANTITY mismatch",
+    "pattern": [
+      "Adjust holding quantity, update gross amount quotation, revise net amount quotation, recalculate tax amount"
+    ],
+    "remediation": "Adjust holding quantity to 12000, update gross amount quotation to 37200, and revise net amount quotation to 24180."
+  },
+  {
+    "type": "Custodian Change",
+    "pattern": [
+      "Change the custodian to JPMORGAN_CHASE."
+    ],
+    "remediation": "Change custodian to JPMORGAN_CHASE."
+  },
+  {
+    "type": "TAX_RATE mismatch",
+    "pattern": [
+      "Adjust the net amount quotation to 7,220,000, recalculate NBIM's tax amount using the custodian's tax rate of 20%."
+    ],
+    "remediation": "Set the tax amount to the recalculated value."
+  },
+  {
+    "type": "TAX_RATE mismatch",
+    "pattern": [
+      "Adjust the tax rate from 25% to 20%."
+    ],
+    "remediation": "Update the NET_AMOUNT_QUOTATION to 7,220,000 and adjust the TAX to reflect the new net amount accordingly."
+  },
+  {
+    "type": "Adjustment Suggestion",
+    "pattern": [
+      "Adjust holding quantity and financial amounts as per the suggestion."
+    ],
+    "remediation": "Adjust holding quantity to 12000, GROSS_AMOUNT_QUOTATION to 37200, NET_AMOUNT_QUOTATION to 24180, and TAX to 13020. Prefer Custody\u2019s settlement currency and escalate if NBIM reports a different one."
+  },
+  {
+    "type": "Holding Quantity and Net Amount Discrepancy Adjustment",
+    "pattern": [
+      "Holding quantity change and net amount discrepancy review"
+    ],
+    "remediation": "Adjust the holding quantity from 10,000 to 12,000 and review the net amount quotation discrepancy of -4030 for proper alignment."
+  },
+  {
+    "type": "NET_AMOUNT and TAX_RATE adjustment",
+    "pattern": [
+      "net amount differs"
+    ],
+    "remediation": "Adjust net amount to 7,220,000"
+  },
+  {
+    "type": "NET_AMOUNT and TAX_RATE adjustment",
+    "pattern": [
+      "tax rate differs"
+    ],
+    "remediation": "Correct tax rate to 20%"
+  },
+  {
+    "type": "CUSTODIAN and NET_AMOUNT adjustments",
+    "pattern": [
+      "Change custodian and adjust net amount quotation"
+    ],
+    "remediation": "Change custodian to CUST/HSBCKR, adjust net amount quotation to 7220000, and recalculate tax amount using a tax rate of 20."
+  },
+  {
+    "type": "CustodianChange",
+    "pattern": [
+      "Changing custodians and adjusting net amount and tax"
+    ],
+    "remediation": "{\"custodian\": \"CUST/HSBCKR\", \"net_amount_quotation\": 7220000}"
+  },
+  {
+    "type": "NET_AMOUNT_QUOTATION adjustment",
+    "pattern": [
+      "net amount quotation change"
+    ],
+    "remediation": "Adjust the net amount quotation to 7220000."
+  },
+  {
+    "type": "TAX_RATE update",
+    "pattern": [
+      "tax rate change"
+    ],
+    "remediation": "Change the tax rate to 20."
+  },
+  {
+    "type": "CUSTODIAN update",
+    "pattern": [
+      "custodian change"
+    ],
+    "remediation": "Update the custodian to CUST/HSBCKR."
   }
 ]
